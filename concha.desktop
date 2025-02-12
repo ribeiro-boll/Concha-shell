@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Concha
+Comment=Minishell feito em C
+Exec=concha
+Icon=utilities-terminal
+Terminal=true
+Type=Application
+Categories=Utility;Terminal;
+Keywords=cli;shell;minishell;
