@@ -8,28 +8,70 @@
 
 char*path;
 void handle_sigint() {
-    printf("\nSIGINT (Ctrl+C) detectado...\nUse 'Ctrl+Shift+C' para copiar ou 'Ctrl+Shift+V' para colar.\n\n");
+    printf("\nSIGINT (Ctrl+C) detectado...\nUse 'Ctrl+Shift+C' para copiar ou 'Ctrl+Shift+V' para colar.\nPara sair, use 'exit'\n\n");
     fflush(stdout);
+    // printa uma mensagem de aviso, pois ctrl + c foi apertado
 }
 
 void cd(int contador,char **path,char **args){
+    // a função muda o diretorio de execução do shell para o caminho especificado pelo usuario
+    // caso o caminho nao exista, o shell exibirá um erro dizendo que o  arquivo ou o diretorio não existe
     if (contador==1){
         chdir("/");
+        // muda para o diretorio padrão caso o chamado de cd, nao possua nenhum argumento
         free(*path);
+        //  libera a memoria do path passado 
         *path = strdup("/");
+        // muda para o diretorio padrão para ser usado pelo resto do shell
         if (chdir(*path)!=0) {
             perror("cd");
         }
     }
     else if (chdir(args[1])!=0){
         perror("cd");
+        // nessa parte, a execução do chdir para mudar o diretorio, ja é feita na propria logica do "else if"
+        // caso o "else if" retorne qualquer coisa diferente de 0, é um sinal que a mudança de diretorio foi um sucesso
+        // caso o contrario, printa um mensagem de erro
     }
     else{
+        // caso o chdir(), mude o diretorio, o codigo cai nesse else
+        // que irá liberar a memoria de path
+        // e clonará o caminho especificado pelo usuario em path
         free(*path);
         *path = strdup(args[1]);
     }
 }
+
+void execute_app(char **arg){
+    //
+    // função para execução geral de comandos, caso a execução retorne em erro de criação de preocesso filho
+    // um erro será gerado
+    //
+    // caso o processo filho seja gerado, o processo pai espera o processo filho 
+    // terminar ou ser terminado, para voltar a ser executado e aguardar novos inputs
+    // 
+    pid_t pid = fork();
+    if (pid == -1){
+        perror("execvp");
+        exit(1);
+    }
+    if (pid == 0){
+        execvp(arg[0],arg);
+        exit(0);
+    }
+    else {
+        int status;
+        waitpid(pid,&status, 0);
+        if (WIFEXITED(status)!=0 && WEXITSTATUS(status)!=0){
+            printf("\nfailed to exec %s command!\n",arg[0]);
+        }
+        return;
+    }
+}
+
 void ls(char **arg,int contador){
+    // mesma funcionalidade do execute_app, porem com algumas mudanças para generalizar o uso do "ls"
+    // e fazer o mesmo exibir o tipo dos arquivos no diretorio atual no qual o shell está sendo executado
     pid_t pid = fork();
     if (pid == -1){
         perror("fork");
@@ -52,29 +94,13 @@ void ls(char **arg,int contador){
         return;
     }
 }
-void execute_app(char **arg){
-    pid_t pid = fork();
-    if (pid == -1){
-        perror("execvp");
-        exit(1);
-    }
-    if (pid == 0){
-        execvp(arg[0],arg);
-        exit(0);
-    }
-    else {
-        int status;
-        waitpid(pid,&status, 0);
-        if (WIFEXITED(status)!=0 && WEXITSTATUS(status)!=0){
-            printf("\nfailed to exec %s command!\n",arg[0]);
-        }
-        return;
-    }
-}
+
 
 int main(){
     system("clear");
     path = strdup("/");
+    // strdup serve para "copiar" uma string para um ponteiro char (bem util!)
+    //*
     struct sigaction sa;
     sa.sa_handler = handle_sigint;
     sigemptyset(&sa.sa_mask);
@@ -83,18 +109,25 @@ int main(){
         perror("sigaction");
         return 1;
     }
+    //* apenas impede de fechar o programa quando (ctrl + c) for apertado
     chdir(path);
     printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n");
     while (1) {
         char nome[PATH_MAX];
-        getcwd(nome, sizeof(nome));
+        getcwd(nome, sizeof(nome)); 
+        // pega o nome do diretorio atual e copia para o buffer essa função getcwd() é extremamente interessante!
+
         char *token = NULL,texto[1024],**args=NULL;
         int contador =0;
+        //contador de args
         printf("$ Concha ~ [ %s ]->%c",nome,32);
         fgets(texto, sizeof(texto), stdin);
         texto[strcspn(texto, "\n")] = '\0';
+        //  remove qualquer "\n" que vaze do input do usuario
         if (texto[0]=='\0'){
             printf("\n\n");
+            // caso o input do usuaro seja vazio (apenas um "\n") ele ignora o input
+            // e printa os espaços
         }
         else {
             token = strtok(texto," ");
@@ -104,43 +137,63 @@ int main(){
                 args[contador-1] = strdup(token);
                 token = strtok(NULL, " ");
             }
+            // loop para transformar o input do usuario em tokens
+            // ex: cd /home/ -> args[0] = cd, args[1] = /home/ 
             if (contador > 0) {
                 args[contador] = NULL;
+                // apenas garante que o final da lista de strings arg, terminará em NULL
+                // pois para o shell executar arquivos, o execvp quando recebe os argumentos,
+                // o ultimo item da lista de args, tem que ser um NULL 
             }
             if (strcmp(args[0], "exit")==0){
                 printf("\n\nthx for using this shell!! :)");
                 exit(0);
+                // captura o comando "exit" e fecha o shell
             }
             else if (strcmp(args[0], "help")==0){
                 printf("\ncd -> will move the path to '/' dir if no arg was typed, else will move\nthe current path to the typed arg path.\nex: 'cd /home/your_pc_name/'\n\nclear -> clears the terminal window\n\nexit -> exits this shell.\n\nFor last, if you type the disired program you wish to be executed, and if the program \nhas an executable in the PATH, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.\n");
+                // captura o comando "help" e printa a lista de comandos
             }
             else if (strcmp(args[0], "ls")==0){
                 printf("\n");
                 strcpy(args[0],"/bin/ls");
                 ls(args,contador);
+                // captura o comando "ls" e chama a função que checa se ls foi executado sem argumentos ou nao
+                // é adiciona o argumento "-F" para exibir o formato do arquivo
             }
             else if (strcmp(args[0], "clear") ==0) {
                 system("clear");
                 free(token);
                 free(args);
                 continue;
+                // captura o comando "exit" e limpa a saida do terminal
             }
             else if(strcmp(args[0], "cd")==0){
                 cd(contador ,&path ,args);
+                // captura o comando "cd", e executa a função que troca o diretorio em que o shell está sendo executado, via o chdir()
+                // ex: 
+                //      path atual-> "/"
+                //      cd /home/bolota/
+                //      path atual-> "/home/bolota"    
             }
             else {
                 printf("\n");
                 execute_app(args);
+                // tenta executar a entrada do usuario, por meio do execvp(), caso a entrada do usuario, bata com um executavel
+                // na PATH do sistema, o shell se clona e passa executar o comando do usuario em um processo filho, ate o comando
+                // para de executar (ex: " exit() ") ou ele for terminado por um sinal (ex: " SIGTERM ")
             }
             printf("\n\n");
-            free(token);
             for (int i = 0; i < contador; i++) {
                 free(args[i]);
+                // libera a memoria de todas as strings na lista de argumentos
             }   
             free(args);
+            // libera a memoria da lista em si
         }
 
     }
     free(path);
+    // por fim, libera a memoria da string que contem o diretorio atual no qual o shell está
     return 0;
 }
