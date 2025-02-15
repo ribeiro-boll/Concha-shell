@@ -5,6 +5,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <readline/history.h>
+#include <readline/readline.h>
+
 
 char*path;
 void handle_sigint() {
@@ -95,8 +98,24 @@ void ls(char **arg,int contador){
     }
 }
 
+void read_his(char* caminho){
+    // confere se o historico de comando existe
 
+    // 1- se existe, ele irá ler o arquivo e extrairá os comandos
+    // 2- se não existe, irá criar o arquivo para começar a guardar comandos
+    if(read_history(caminho) == 0){
+        return;
+    }
+    else {
+        write_history(caminho);
+        return;
+    }
+}
 int main(){
+    char home[5124];
+    char *user = getenv("USER");
+    snprintf(home, sizeof(home), "%s/%s/%s","/home",user,"Documents/shell_history.txt");
+    read_his(home);
     system("clear");
     path = strdup("/");
     // strdup serve para "copiar" uma string para um ponteiro char (bem util!)
@@ -117,12 +136,16 @@ int main(){
         getcwd(nome, sizeof(nome)); 
         // pega o nome do diretorio atual e copia para o buffer essa função getcwd() é extremamente interessante!
 
-        char *token = NULL,texto[1024],**args=NULL;
+        char *token = NULL,*texto = NULL,**args=NULL;
         int contador =0;
-        //contador de args
-        printf("$ Concha ~ [ %s ]->%c",nome,32);
-        fgets(texto, sizeof(texto), stdin);
-        texto[strcspn(texto, "\n")] = '\0';
+        // contador de args
+        char frase[5128];
+        snprintf(frase,sizeof(frase),"$ Concha ~ [ %s ]->%c",nome,32);
+        texto = readline(frase);
+        // adorei a ideia do readline, alem de ser simples, é extremamente pratico de implementar
+        // ele basicamente serve para que o historico funcione, podendo extrair da lista do historico
+        // e colocando no buffer de input (stdin)
+
         //  remove qualquer "\n" que vaze do input do usuario
         if (texto[0]=='\0'){
             printf("\n\n");
@@ -130,6 +153,8 @@ int main(){
             // e printa os espaços
         }
         else {
+            add_history(texto); // adiciona na lista de historico
+            write_history(home); // grava no arquivo do historico, para memoria persistente dos comandos
             token = strtok(texto," ");
             while (token!=NULL) {
                 contador+=1;
@@ -189,6 +214,7 @@ int main(){
                 // libera a memoria de todas as strings na lista de argumentos
             }   
             free(args);
+            free(texto);
             // libera a memoria da lista em si
         }
 
