@@ -16,7 +16,8 @@ A simple shell implemented in C for educational purposes. It provides basic comm
 ### Features
 - **Change Directory (`cd`)**: Changes the current directory. If no argument is provided, defaults to the root directory (`/`).
 - **List Directory Contents (`ls`)**: Displays the contents of the current directory.
-- **Clear Screen (`clear`)**: Clears the terminal window.
+- **Clear Screen (`cls`)**: Clears the terminal window.
+- **Clear History (`hcls`)**: clears the file that stores the commands and deletes the current history.
 - **Built-in Commands**: Includes `help` (displays available commands) and `exit` (exits the shell).
 - **Execution of External Commands**: If a command is not built-in, the shell attempts to execute it using the system PATH.
 - **Signal Handling**: Captures SIGINT (Ctrl+C) and provides a custom message.
@@ -40,7 +41,8 @@ Um shell simples implementado em C para fins educacionais. Ele fornece execuçã
 ### Funcionalidades
 - **Mudar Diretório (`cd`)**: Altera o diretório atual. Se nenhum argumento for fornecido, utiliza como padrão o diretório raiz (`/`).
 - **Listar Conteúdo do Diretório (`ls`)**: Exibe o conteúdo do diretório atual.
-- **Limpar a Tela (`clear`)**: Limpa a janela do terminal.
+- **Limpar a Tela (`cls`)**: Limpa a janela do terminal.
+- **Limpar o Historico (`hcls`)**: limpa o arquivo que guarda os comandos e apaga o historico atual
 - **Comandos Internos**: Inclui `help` (exibe os comandos disponíveis) e `exit` (encerra o shell).
 - **Execução de Comandos Externos**: Se um comando não for interno, o shell tenta executá-lo utilizando o PATH do sistema.
 - **Tratamento de Sinais**: Captura SIGINT (Ctrl+C) e exibe uma mensagem customizada.
