@@ -33,7 +33,7 @@ A simple shell implemented in C for educational purposes. It provides basic comm
 Clone the repository and compile the source code using GCC:
 
 ```bash
-gcc -o concha concha.c
+gcc -o concha concha.c -lreadline
 ```
 
 ## pt-BR
@@ -60,5 +60,5 @@ Um shell simples implementado em C para fins educacionais. Ele fornece execuçã
 Clone o repositório e compile o código-fonte usando o GCC:
 
 ```bash
-gcc -o concha concha.c
+gcc -o concha concha.c -lreadline
 ```
