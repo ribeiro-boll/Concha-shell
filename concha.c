@@ -113,7 +113,6 @@ void read_his(char* caminho){
 }
 int main(){
     char home[5124];
-    
     char *user = getenv("USER");
     snprintf(home, sizeof(home), "%s/%s/%s","/home",user,"Documents/shell_history.txt");
     read_his(home);
@@ -147,6 +146,7 @@ int main(){
         char frase[5128];
         snprintf(frase,sizeof(frase),"$ Concha & %s [-> %s <-] =❱ ",user,nome);
         texto = readline(frase);
+        //
         // adorei a ideia do readline, alem de ser simples, é extremamente pratico de implementar
         // ele basicamente serve para que o historico funcione, podendo extrair da lista do historico
         // e colocando no buffer de input (stdin)
@@ -196,6 +196,8 @@ int main(){
                 // captura o comando "exit" e fecha o shell
             }
             else if (strcmp(args[0], "help")==0){
+                printf("\033]0;%s\007",texto);
+                fflush(stdout);
                 printf("\ncd -> will move the execution initial_dir of this shell to '/' dir if no arg was typed, else will move\nthe current exec initial_dir to the typed argument initial_dir.\nex: 'cd /home/your_pc_name/'\n\nArrow up and Down -> move between the history of used commands\n\ncls -> clears the terminal window\n\nhcls -> clears the command history\n\nexit -> exits this shell.\n\nIf you type the disired program you wish to be executed, and the program \nhas an executable in the initial_dir, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.");
                 // captura o comando "help" e printa a lista de comandos
             }
@@ -216,6 +218,8 @@ int main(){
                 }
             }
             else if (strcmp(args[0], "ls")==0){
+                printf("\033]0;%s\007",texto);
+                fflush(stdout);
                 printf("\n");
                 strcpy(args[0],"/bin/ls");
                 ls(args,contador);
@@ -230,6 +234,8 @@ int main(){
                 // captura o comando "exit" e limpa a saida do terminal
             }
             else if(strcmp(args[0], "cd")==0){
+                printf("\033]0;%s\007",texto);
+                fflush(stdout);
                 cd(contador ,&initial_dir ,args);
                 // captura o comando "cd", e executa a função que troca o diretorio em que o shell está sendo executado, via o chdir()
                 // ex: 
@@ -239,6 +245,8 @@ int main(){
             }
             else {
                 printf("\n");
+                printf("\033]0;%s\007",texto);
+                fflush(stdout);
                 execute_app(args);
                 // tenta executar a entrada do usuario, por meio do execvp(), caso a entrada do usuario, bata com um executavel
                 // na initial_dir do sistema, o shell se clona e passa executar o comando do usuario em um processo filho, ate o comando
