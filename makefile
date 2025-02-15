@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
+LIBS = -lreadline
 TARGET = concha
 DESKTOP_FILE = concha.desktop
 DESKTOP_PATH = /usr/share/applications
@@ -7,7 +8,7 @@ DESKTOP_PATH = /usr/share/applications
 all: $(TARGET)
 
 $(TARGET): concha.c
-	$(CC) $(CFLAGS) concha.c -o $(TARGET)
+	$(CC) $(CFLAGS) concha.c -o $(TARGET) $(LIBS)
 
 install-desktop:
 	cp $(DESKTOP_FILE) $(DESKTOP_PATH)/
