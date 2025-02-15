@@ -169,7 +169,7 @@ int main(){
                     printf("%s", temp);
                     if (temp){
                         args[contador-1] = strdup(temp);
-                        free(temp);
+                        //free(temp);
                         token = strtok(NULL, " ");
                     }
                     else {
