@@ -179,6 +179,7 @@ int main(){
                 // captura o comando "help" e printa a lista de comandos
             }
             else if (strcmp(args[0], "hcls")==0) {
+                // captura o comando "hcls" que apagará o historico de comandos caso o usuario digite y ou Y 
                 int escolha;
                 printf("\nAre you sure you want to do this? (default: N) y/N?%c",32);
                 escolha = getchar();
