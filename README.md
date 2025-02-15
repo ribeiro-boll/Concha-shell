@@ -12,6 +12,7 @@
 ## English 
 
 A simple shell implemented in C for educational purposes. It provides basic command execution, directory navigation, and minimal signal handling.
+
 **Now with Command history and arrow keys are now usable for editing the command input!**
 
 ### Features
@@ -38,6 +39,7 @@ gcc -o concha concha.c
 ## pt-BR
 
 Um shell simples implementado em C para fins educacionais. Ele fornece execução básica de comandos, navegação de diretórios e tratamento mínimo de sinais.
+
 **Agora com o histórico de comandos e as teclas de seta estão disponíveis para editar o comando digitado!**
 
 ### Funcionalidades
