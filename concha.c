@@ -114,6 +114,8 @@ void read_his(char* caminho){
 int main(){
     char home[5124];
     char *user = getenv("USER");
+    printf("\033]0;%s\007","Concha-shell");
+    fflush(stdout);
     snprintf(home, sizeof(home), "%s/%s/%s","/home",user,"Documents/shell_history.txt");
     read_his(home);
     system("clear");
