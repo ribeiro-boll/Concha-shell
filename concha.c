@@ -8,12 +8,6 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 
-
-// TODO: mudar o receebimento de argumentos que começarem com "$" para getenv(var (var é o nome do que tiver dps de $))
-
-
-
-
 char*initial_dir;
 void handle_sigint() {
     printf("\nSIGINT (Ctrl+C) detectado...\nUse 'Ctrl+Shift+C' para copiar ou 'Ctrl+Shift+V' para colar.\nPara sair, use 'exit'\n\n");
@@ -35,6 +29,7 @@ void cd(int contador,char **initial_dir,char **args){
         if (chdir(*initial_dir)!=0) {
             perror("cd");
         }
+        free(home);
     }
     else if (chdir(args[1])!=0){
         perror("cd");
@@ -171,8 +166,16 @@ int main(){
                 args = realloc(args, sizeof(char*)*(1+contador));
                 if (token[0]=='$'){
                     char *temp = getenv(token+1);
-                    args[contador-1] = strdup(temp);
-                    token = strtok(NULL, " ");
+                    printf("%s", temp);
+                    if (temp){
+                        args[contador-1] = strdup(temp);
+                        free(temp);
+                        token = strtok(NULL, " ");
+                    }
+                    else {
+                        contador-=1;
+                        token = strtok(NULL, " ");
+                    }
                     //caso o argumento seja iniciado por $, essa parte tentará extrair o caminho do argumento
                 }
                 else {
@@ -253,6 +256,7 @@ int main(){
         }
 
     }
+    free(user);
     free(initial_dir);
     // por fim, libera a memoria da string que contem o diretorio atual no qual o shell está
     return 0;
