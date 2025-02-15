@@ -20,11 +20,12 @@ void cd(int contador,char **initial_dir,char **args){
     // a função muda o diretorio de execução do shell para o caminho especificado pelo usuario
     // caso o caminho nao exista, o shell exibirá um erro dizendo que o  arquivo ou o diretorio não existe
     if (contador==1){
-        chdir("/");
+        char *home = getenv("HOME");
+        chdir(home);
         // muda para o diretorio padrão caso o chamado de cd, nao possua nenhum argumento
         free(*initial_dir);
         //  libera a memoria do initial_dir passado 
-        *initial_dir = strdup("/");
+        *initial_dir = strdup(home);
         // muda para o diretorio padrão para ser usado pelo resto do shell
         if (chdir(*initial_dir)!=0) {
             perror("cd");
@@ -123,7 +124,7 @@ int main(){
         env_path = "/usr/local/bin:/usr/bin:/bin";
     }
     setenv("PATH", env_path, 1);
-    initial_dir = strdup("/");
+    initial_dir = strdup(getenv("HOME"));
     // strdup serve para "copiar" uma string para um ponteiro char (bem util!)
     //*
     struct sigaction sa;
