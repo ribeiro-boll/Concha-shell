@@ -12,12 +12,13 @@
 ## English 
 
 A simple shell implemented in C for educational purposes. It provides basic command execution, directory navigation, and minimal signal handling.
+**Now with Command history and arrow keys are now usable for editing the command input!**
 
 ### Features
 - **Change Directory (`cd`)**: Changes the current directory. If no argument is provided, defaults to the root directory (`/`).
 - **List Directory Contents (`ls`)**: Displays the contents of the current directory.
 - **Clear Screen (`cls`)**: Clears the terminal window.
-- **Clear History (`hcls`)**: clears the file that stores the commands and deletes the current history.
+- **Clear History (`hcls`)**: clears the file that stores the command and deletes the current history.
 - **Built-in Commands**: Includes `help` (displays available commands) and `exit` (exits the shell).
 - **Execution of External Commands**: If a command is not built-in, the shell attempts to execute it using the system PATH.
 - **Signal Handling**: Captures SIGINT (Ctrl+C) and provides a custom message.
@@ -37,6 +38,7 @@ gcc -o concha concha.c
 ## pt-BR
 
 Um shell simples implementado em C para fins educacionais. Ele fornece execução básica de comandos, navegação de diretórios e tratamento mínimo de sinais.
+**Agora com o histórico de comandos e as teclas de seta estão disponíveis para editar o comando digitado!**
 
 ### Funcionalidades
 - **Mudar Diretório (`cd`)**: Altera o diretório atual. Se nenhum argumento for fornecido, utiliza como padrão o diretório raiz (`/`).
