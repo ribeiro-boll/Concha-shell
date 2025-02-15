@@ -148,7 +148,6 @@ int main(){
 
         //  remove qualquer "\n" que vaze do input do usuario
         if (texto[0]=='\0'){
-            printf("\n\n");
             // caso o input do usuaro seja vazio (apenas um "\n") ele ignora o input
             // e printa os espaços
         }
@@ -176,8 +175,23 @@ int main(){
                 // captura o comando "exit" e fecha o shell
             }
             else if (strcmp(args[0], "help")==0){
-                printf("\ncd -> will move the path to '/' dir if no arg was typed, else will move\nthe current path to the typed arg path.\nex: 'cd /home/your_pc_name/'\n\nclear -> clears the terminal window\n\nexit -> exits this shell.\n\nFor last, if you type the disired program you wish to be executed, and if the program \nhas an executable in the PATH, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.\n");
+                printf("\ncd -> will move the execution path of this shell to '/' dir if no arg was typed, else will move\nthe current exec path to the typed argument path.\nex: 'cd /home/your_pc_name/'\n\nArrow up and Down -> move between the history of used commands\n\ncls -> clears the terminal window\n\nhcls -> clears the command history\n\nexit -> exits this shell.\n\nIf you type the disired program you wish to be executed, and the program \nhas an executable in the PATH, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.");
                 // captura o comando "help" e printa a lista de comandos
+            }
+            else if (strcmp(args[0], "hcls")==0) {
+                int escolha;
+                printf("\nAre you sure you want to do this? (default: N) y/N?%c",32);
+                escolha = getchar();
+                if (escolha == 'y'|| escolha == 'Y'){
+                    if(remove(home)==0){
+                        clear_history();
+                        write_history(home);
+                        printf("\nCommands history was wiped with succes!");
+                    }
+                    else {
+                        printf("Error! could not delete %s",path);
+                    }
+                }
             }
             else if (strcmp(args[0], "ls")==0){
                 printf("\n");
@@ -186,7 +200,7 @@ int main(){
                 // captura o comando "ls" e chama a função que checa se ls foi executado sem argumentos ou nao
                 // é adiciona o argumento "-F" para exibir o formato do arquivo
             }
-            else if (strcmp(args[0], "clear") ==0) {
+            else if (strcmp(args[0], "cls") ==0) {
                 system("clear");
                 free(token);
                 free(args);
@@ -208,7 +222,7 @@ int main(){
                 // na PATH do sistema, o shell se clona e passa executar o comando do usuario em um processo filho, ate o comando
                 // para de executar (ex: " exit() ") ou ele for terminado por um sinal (ex: " SIGTERM ")
             }
-            printf("\n\n");
+            printf("\n");
             for (int i = 0; i < contador; i++) {
                 free(args[i]);
                 // libera a memoria de todas as strings na lista de argumentos

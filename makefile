@@ -25,5 +25,4 @@ help:
 	@echo "Uso:"
 	@echo "  make           : Compila o programa"
 	@echo "  sudo make install : Instala o programa com o .desktop"
-	@echo "  sudo make install-all : Instala o app + ícone no menu"
 	@echo "  make clean     : Remove o executável"
