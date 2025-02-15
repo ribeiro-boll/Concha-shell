@@ -140,7 +140,7 @@ int main(){
         int contador =0;
         // contador de args
         char frase[5128];
-        snprintf(frase,sizeof(frase),"$ Concha ~ [ %s ]->%c",nome,32);
+        snprintf(frase,sizeof(frase),"$ Concha & %s [-> %s <-] =❱%c",user,nome,32);
         texto = readline(frase);
         // adorei a ideia do readline, alem de ser simples, é extremamente pratico de implementar
         // ele basicamente serve para que o historico funcione, podendo extrair da lista do historico
