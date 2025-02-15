@@ -29,7 +29,6 @@ void cd(int contador,char **initial_dir,char **args){
         if (chdir(*initial_dir)!=0) {
             perror("cd");
         }
-        free(home);
     }
     else if (chdir(args[1])!=0){
         perror("cd");
