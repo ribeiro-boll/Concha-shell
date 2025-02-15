@@ -9,6 +9,11 @@
 #include <readline/readline.h>
 
 
+// TODO: mudar o receebimento de argumentos que começarem com "$" para getenv(var (var é o nome do que tiver dps de $))
+
+
+
+
 char*initial_dir;
 void handle_sigint() {
     printf("\nSIGINT (Ctrl+C) detectado...\nUse 'Ctrl+Shift+C' para copiar ou 'Ctrl+Shift+V' para colar.\nPara sair, use 'exit'\n\n");
@@ -164,8 +169,16 @@ int main(){
             while (token!=NULL) {
                 contador+=1;
                 args = realloc(args, sizeof(char*)*(1+contador));
-                args[contador-1] = strdup(token);
-                token = strtok(NULL, " ");
+                if (token[0]=='$'){
+                    char *temp = getenv(token+1);
+                    args[contador-1] = strdup(temp);
+                    token = strtok(NULL, " ");
+                    //caso o argumento seja iniciado por $, essa parte tentará extrair o caminho do argumento
+                }
+                else {
+                    args[contador-1] = strdup(token);
+                    token = strtok(NULL, " ");
+                }
             }
             // loop para transformar o input do usuario em tokens
             // ex: cd /home/ -> args[0] = cd, args[1] = /home/ 
@@ -174,22 +187,6 @@ int main(){
                 // apenas garante que o final da lista de strings arg, terminará em NULL
                 // pois para o shell executar arquivos, o execvp quando recebe os argumentos,
                 // o ultimo item da lista de args, tem que ser um NULL 
-            }
-            if (strcmp(args[0],"echo") == 0) {
-                char *var = strchr(args[1], '$');
-                if (var) {
-                    char *env_var = getenv(var + 1);
-                    if (env_var) {
-                        printf("%s\n", env_var);
-                    }
-                    else {
-                        printf("\n");
-                    }
-                } 
-                else {
-                    printf("%s\n", args[1]);
-                }
-                continue;
             }
             if (strcmp(args[0], "exit")==0){
                 printf("\n\nthx for using this shell!! :)");
