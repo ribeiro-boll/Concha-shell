@@ -9,24 +9,24 @@
 #include <readline/readline.h>
 
 
-char*path;
+char*initial_dir;
 void handle_sigint() {
     printf("\nSIGINT (Ctrl+C) detectado...\nUse 'Ctrl+Shift+C' para copiar ou 'Ctrl+Shift+V' para colar.\nPara sair, use 'exit'\n\n");
     fflush(stdout);
     // printa uma mensagem de aviso, pois ctrl + c foi apertado
 }
 
-void cd(int contador,char **path,char **args){
+void cd(int contador,char **initial_dir,char **args){
     // a função muda o diretorio de execução do shell para o caminho especificado pelo usuario
     // caso o caminho nao exista, o shell exibirá um erro dizendo que o  arquivo ou o diretorio não existe
     if (contador==1){
         chdir("/");
         // muda para o diretorio padrão caso o chamado de cd, nao possua nenhum argumento
-        free(*path);
-        //  libera a memoria do path passado 
-        *path = strdup("/");
+        free(*initial_dir);
+        //  libera a memoria do initial_dir passado 
+        *initial_dir = strdup("/");
         // muda para o diretorio padrão para ser usado pelo resto do shell
-        if (chdir(*path)!=0) {
+        if (chdir(*initial_dir)!=0) {
             perror("cd");
         }
     }
@@ -38,10 +38,10 @@ void cd(int contador,char **path,char **args){
     }
     else{
         // caso o chdir(), mude o diretorio, o codigo cai nesse else
-        // que irá liberar a memoria de path
-        // e clonará o caminho especificado pelo usuario em path
-        free(*path);
-        *path = strdup(args[1]);
+        // que irá liberar a memoria de initial_dir
+        // e clonará o caminho especificado pelo usuario em initial_dir
+        free(*initial_dir);
+        *initial_dir = strdup(args[1]);
     }
 }
 
@@ -113,11 +113,17 @@ void read_his(char* caminho){
 }
 int main(){
     char home[5124];
+    
     char *user = getenv("USER");
     snprintf(home, sizeof(home), "%s/%s/%s","/home",user,"Documents/shell_history.txt");
     read_his(home);
     system("clear");
-    path = strdup("/");
+    const char *env_path = getenv("PATH");
+    if (env_path == NULL) {
+        env_path = "/usr/local/bin:/usr/bin:/bin";
+    }
+    setenv("PATH", env_path, 1);
+    initial_dir = strdup("/");
     // strdup serve para "copiar" uma string para um ponteiro char (bem util!)
     //*
     struct sigaction sa;
@@ -129,13 +135,12 @@ int main(){
         return 1;
     }
     //* apenas impede de fechar o programa quando (ctrl + c) for apertado
-    chdir(path);
+    chdir(initial_dir);
     printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n");
     while (1) {
         char nome[PATH_MAX];
         getcwd(nome, sizeof(nome)); 
         // pega o nome do diretorio atual e copia para o buffer essa função getcwd() é extremamente interessante!
-
         char *token = NULL,*texto = NULL,**args=NULL;
         int contador =0;
         // contador de args
@@ -169,13 +174,29 @@ int main(){
                 // pois para o shell executar arquivos, o execvp quando recebe os argumentos,
                 // o ultimo item da lista de args, tem que ser um NULL 
             }
+            if (strcmp(args[0],"echo") == 0) {
+                char *var = strchr(args[1], '$');
+                if (var) {
+                    char *env_var = getenv(var + 1);
+                    if (env_var) {
+                        printf("%s\n", env_var);
+                    }
+                    else {
+                        printf("\n");
+                    }
+                } 
+                else {
+                    printf("%s\n", args[1]);
+                }
+                continue;
+            }
             if (strcmp(args[0], "exit")==0){
                 printf("\n\nthx for using this shell!! :)");
                 exit(0);
                 // captura o comando "exit" e fecha o shell
             }
             else if (strcmp(args[0], "help")==0){
-                printf("\ncd -> will move the execution path of this shell to '/' dir if no arg was typed, else will move\nthe current exec path to the typed argument path.\nex: 'cd /home/your_pc_name/'\n\nArrow up and Down -> move between the history of used commands\n\ncls -> clears the terminal window\n\nhcls -> clears the command history\n\nexit -> exits this shell.\n\nIf you type the disired program you wish to be executed, and the program \nhas an executable in the PATH, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.");
+                printf("\ncd -> will move the execution initial_dir of this shell to '/' dir if no arg was typed, else will move\nthe current exec initial_dir to the typed argument initial_dir.\nex: 'cd /home/your_pc_name/'\n\nArrow up and Down -> move between the history of used commands\n\ncls -> clears the terminal window\n\nhcls -> clears the command history\n\nexit -> exits this shell.\n\nIf you type the disired program you wish to be executed, and the program \nhas an executable in the initial_dir, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.");
                 // captura o comando "help" e printa a lista de comandos
             }
             else if (strcmp(args[0], "hcls")==0) {
@@ -190,7 +211,7 @@ int main(){
                         printf("\nCommands history was wiped with success!");
                     }
                     else {
-                        printf("Error! could not delete %s",path);
+                        printf("Error! could not delete %s",initial_dir);
                     }
                 }
             }
@@ -209,18 +230,18 @@ int main(){
                 // captura o comando "exit" e limpa a saida do terminal
             }
             else if(strcmp(args[0], "cd")==0){
-                cd(contador ,&path ,args);
+                cd(contador ,&initial_dir ,args);
                 // captura o comando "cd", e executa a função que troca o diretorio em que o shell está sendo executado, via o chdir()
                 // ex: 
-                //      path atual-> "/"
+                //      initial_dir atual-> "/"
                 //      cd /home/bolota/
-                //      path atual-> "/home/bolota"    
+                //      initial_dir atual-> "/home/bolota"    
             }
             else {
                 printf("\n");
                 execute_app(args);
                 // tenta executar a entrada do usuario, por meio do execvp(), caso a entrada do usuario, bata com um executavel
-                // na PATH do sistema, o shell se clona e passa executar o comando do usuario em um processo filho, ate o comando
+                // na initial_dir do sistema, o shell se clona e passa executar o comando do usuario em um processo filho, ate o comando
                 // para de executar (ex: " exit() ") ou ele for terminado por um sinal (ex: " SIGTERM ")
             }
             printf("\n");
@@ -234,7 +255,7 @@ int main(){
         }
 
     }
-    free(path);
+    free(initial_dir);
     // por fim, libera a memoria da string que contem o diretorio atual no qual o shell está
     return 0;
 }
