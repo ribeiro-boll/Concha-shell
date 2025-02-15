@@ -1,7 +1,7 @@
 ![os](https://camo.githubusercontent.com/e6d28433c0c1041770537fc7f5af3110f9d9cb0b8e8aded756769aebdba81135/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f2d4c696e75782d677265793f6c6f676f3d6c696e7578)
 ![license](https://img.shields.io/badge/License-Unlicense-green)  ![badge](https://img.shields.io/badge/Lang-C-blue)
 # 🐚 *Concha shell* 
-![CLI Demo](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2h6Mjcwc2pvdXA4MDIxNjU0YzZzem82MTliNjV5YjFlaGtxd2E4OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/AoDfBtWNKPqDbU5MK4/giphy.gif)
+![CLI Demo](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZHptOWJvaWttMTdibWl3cG9jbmN2MWhpMDV6MGF6bDViYWN0NGJncyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NiYsu3p5EC8hfTSpVb/giphy.gif)
 
 
 - *English version: [English version](#English)*
