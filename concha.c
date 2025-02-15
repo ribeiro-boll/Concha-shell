@@ -186,7 +186,7 @@ int main(){
                     if(remove(home)==0){
                         clear_history();
                         write_history(home);
-                        printf("\nCommands history was wiped with succes!");
+                        printf("\nCommands history was wiped with success!");
                     }
                     else {
                         printf("Error! could not delete %s",path);
