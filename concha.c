@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <readline/history.h>
 #include <readline/readline.h>
@@ -98,33 +99,45 @@ void ls(char **arg,int contador){
     }
 }
 
-void read_his(char* caminho){
+void read_his(char* caminho,char *user){
     // confere se o historico de comando existe
 
     // 1- se existe, ele irá ler o arquivo e extrairá os comandos
     // 2- se não existe, irá criar o arquivo para começar a guardar comandos
-    if(read_history(caminho) == 0){
+    struct stat st = {0};
+    char temp[5124];
+    snprintf(temp,sizeof(temp),"%s/%s",user,".config/concha/"); 
+    if (stat(temp, &st) ==-1){
+        mkdir(temp, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        write_history(caminho);
         return;
     }
     else {
-        write_history(caminho);
-        return;
+        if(read_history(caminho) == 0){
+            return;
+        }
+        else {
+            write_history(caminho);
+            return;
+        }
     }
 }
 int main(){
     char home[5124];
     char *user = getenv("USER");
+    char *path_home = getenv("HOME");
+    char *path_path = getenv("PATH");
     printf("\033]0;%s\007","Concha-shell");
     fflush(stdout);
-    snprintf(home, sizeof(home), "%s/%s/%s","/home",user,"Documents/shell_history.txt");
-    read_his(home);
+    snprintf(home, sizeof(home), "%s/%s",path_home,".config/concha/shell_history.txt");
     system("clear");
-    const char *env_path = getenv("PATH");
+    read_his(home,path_home);
+    const char *env_path = path_path;
     if (env_path == NULL) {
         env_path = "/usr/local/bin:/usr/bin:/bin";
     }
     setenv("PATH", env_path, 1);
-    initial_dir = strdup(getenv("HOME"));
+    initial_dir = strdup(path_home);
     // strdup serve para "copiar" uma string para um ponteiro char (bem util!)
     //*
     struct sigaction sa;
