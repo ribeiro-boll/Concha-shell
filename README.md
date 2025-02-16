@@ -17,7 +17,7 @@ A simple shell implemented in C for educational purposes. It provides basic comm
 **Now with Command history and arrow keys are now usable for editing the command input!**
 
 ### Features
-- **Change Directory (`cd`)**: Changes the current directory. If no argument is provided, defaults to the root directory (`/`).
+- **Change Directory (`cd`)**: Changes the current directory. If no argument is provided, defaults to the directory ($HOME).
 - **List Directory Contents (`ls`)**: Displays the contents of the current directory.
 - **Clear Screen (`cls`)**: Clears the terminal window.
 - **Clear History (`hcls`)**: clears the file that stores the command and deletes the current history.
@@ -44,7 +44,7 @@ Um shell simples implementado em C para fins educacionais. Ele fornece execuçã
 **Agora com o histórico de comandos e as teclas de seta estão disponíveis para editar o comando digitado!**
 
 ### Funcionalidades
-- **Mudar Diretório (`cd`)**: Altera o diretório atual. Se nenhum argumento for fornecido, utiliza como padrão o diretório raiz (`/`).
+- **Mudar Diretório (`cd`)**: Altera o diretório atual. Se nenhum argumento for fornecido, utiliza como padrão o diretório ($HOME).
 - **Listar Conteúdo do Diretório (`ls`)**: Exibe o conteúdo do diretório atual.
 - **Limpar a Tela (`cls`)**: Limpa a janela do terminal.
 - **Limpar o Historico (`hcls`)**: limpa o arquivo que guarda os comandos e apaga o historico atual
