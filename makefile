@@ -25,7 +25,7 @@ install:
 		echo "$(SHELL_PATH) já está presente em /etc/shells."; \
 	fi; \
 	update-desktop-database 
-	echo "para usar como shell padrão, digite chsh -s /usr/local/bin/concha !"
+	@printf "\n\npara usar como shell padrão, digite chsh -s /usr/local/bin/concha !"
 
 clean:
 	rm -f $(TARGET)
