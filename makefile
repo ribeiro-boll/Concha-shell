@@ -4,6 +4,7 @@ LIBS = -lreadline
 TARGET = concha
 DESKTOP_FILE = concha.desktop
 DESKTOP_PATH = /usr/share/applications
+SHELL_PATH = /usr/local/bin/concha
 
 all: $(TARGET)
 
@@ -17,7 +18,14 @@ install-desktop:
 install: 
 	cp $(TARGET) /usr/local/bin
 	cp $(DESKTOP_FILE) $(DESKTOP_PATH)/
-	update-desktop-database
+	@if ! grep -qx "$(SHELL_PATH)" /etc/shells; then \
+		echo "Adicionando $(SHELL_PATH) em /etc/shells..."; \
+		echo $(SHELL_PATH) | sudo tee -a /etc/shells; \
+	else \
+		echo "$(SHELL_PATH) já está presente em /etc/shells."; \
+	fi; \
+	update-desktop-database 
+	echo "para usar como shell padrão, digite chsh -s /usr/local/bin/concha !"
 
 clean:
 	rm -f $(TARGET)
