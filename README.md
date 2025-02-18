@@ -22,6 +22,8 @@ A simple shell implemented in C for educational purposes. It provides basic comm
   
   **- Arrow keys are now usable for editing the command input**
 
+  
+
 ### Features
 - **Change Directory (`cd`)**: Changes the current directory. If no argument is provided, defaults to the directory ($HOME).
 - **List Directory Contents (`ls`)**: Displays the contents of the current directory.
@@ -54,6 +56,8 @@ Um shell simples implementado em C para fins educacionais. Ele fornece execuçã
 **- Histórico de comandos**
 
 **- As teclas de seta agora podem ser usadas para editar a entrada de comandos**
+
+
 
 
 ### Funcionalidades
