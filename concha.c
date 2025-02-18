@@ -9,94 +9,24 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 
-char*initial_dir;
-void handle_sigint() {
+typedef struct temp {
+    char **argumentos_execucao;
+    char *tipo_sequencia;
+    int quantidade_argumentos;
+    struct temp *next;
+    struct temp *prev;
+} Comando;
+
+Comando *final = NULL;
+Comando *inicio = NULL;
+int var_condicional_execução = 0; // muda para 0, caso a execução de algo falhe
+
+
+void handle_sigint(int signum) {
     printf("\nSIGINT (Ctrl+C) detectado...\nUse 'Ctrl+Shift+C' para copiar ou 'Ctrl+Shift+V' para colar.\nPara sair, use 'exit'\n\n");
     fflush(stdout);
+    return;
     // printa uma mensagem de aviso, pois ctrl + c foi apertado
-}
-
-void cd(int contador,char **initial_dir,char **args){
-    // a função muda o diretorio de execução do shell para o caminho especificado pelo usuario
-    // caso o caminho nao exista, o shell exibirá um erro dizendo que o  arquivo ou o diretorio não existe
-    if (contador==1){
-        char *home = getenv("HOME");
-        chdir(home);
-        // muda para o diretorio padrão caso o chamado de cd, nao possua nenhum argumento
-        free(*initial_dir);
-        //  libera a memoria do initial_dir passado 
-        *initial_dir = strdup(home);
-        // muda para o diretorio padrão para ser usado pelo resto do shell
-        if (chdir(*initial_dir)!=0) {
-            perror("cd");
-        }
-    }
-    else if (chdir(args[1])!=0){
-        perror("cd");
-        // nessa parte, a execução do chdir para mudar o diretorio, ja é feita na propria logica do "else if"
-        // caso o "else if" retorne qualquer coisa diferente de 0, é um sinal que a mudança de diretorio foi um sucesso
-        // caso o contrario, printa um mensagem de erro
-    }
-    else{
-        // caso o chdir(), mude o diretorio, o codigo cai nesse else
-        // que irá liberar a memoria de initial_dir
-        // e clonará o caminho especificado pelo usuario em initial_dir
-        free(*initial_dir);
-        *initial_dir = strdup(args[1]);
-    }
-}
-
-void execute_app(char **arg){
-    //
-    // função para execução geral de comandos, caso a execução retorne em erro de criação de preocesso filho
-    // um erro será gerado
-    //
-    // caso o processo filho seja gerado, o processo pai espera o processo filho 
-    // terminar ou ser terminado, para voltar a ser executado e aguardar novos inputs
-    // 
-    pid_t pid = fork();
-    if (pid == -1){
-        perror("execvp");
-        exit(1);
-    }
-    if (pid == 0){
-        execvp(arg[0],arg);
-        exit(0);
-    }
-    else {
-        int status;
-        waitpid(pid,&status, 0);
-        if (WIFEXITED(status)!=0 && WEXITSTATUS(status)!=0){
-            printf("\nfailed to exec %s command!\n",arg[0]);
-        }
-        return;
-    }
-}
-
-void ls(char **arg,int contador){
-    // mesma funcionalidade do execute_app, porem com algumas mudanças para generalizar o uso do "ls"
-    // e fazer o mesmo exibir o tipo dos arquivos no diretorio atual no qual o shell está sendo executado
-    pid_t pid = fork();
-    if (pid == -1){
-        perror("fork");
-        exit(1);
-    }
-    if (pid == 0){
-        contador+=2;
-        arg = realloc(arg,contador);
-        arg[contador-1] = "-F";
-        arg[contador] = NULL;
-        execve(arg[0],arg,NULL);
-        exit(0);
-    }
-    else {
-        int status;
-        waitpid(pid,&status, 0);
-        if (WIFEXITED(status)!=0 && WEXITSTATUS(status)!=0){
-            printf("\nfailed exec ls command!\n");
-        }
-        return;
-    }
 }
 
 void read_his(char* caminho,char *user){
@@ -122,24 +52,269 @@ void read_his(char* caminho,char *user){
         }
     }
 }
-int main(){
-    char home[5124];
-    char *user = getenv("USER");
-    char *path_home = getenv("HOME");
+
+void free_list() {
+    Comando *comando = inicio;
+    while (comando != NULL) {
+        Comando *temp = comando;
+        comando = comando->next;
+        // Liberar argumentos_execucao
+        if (temp->argumentos_execucao != NULL) {
+            for (int i = 0; temp->argumentos_execucao[i] != NULL; i++) {
+                free(temp->argumentos_execucao[i]);
+            }
+            free(temp->argumentos_execucao);
+        }
+
+        // Liberar tipo_sequencia
+        if (temp->tipo_sequencia != NULL) {
+            free(temp->tipo_sequencia);
+        }
+
+        free(temp);
+    }
+    inicio = NULL;
+    final = NULL;
+}
+
+void add_command(char **exec_commands, char *exec_sequence, int quantidade_argumentos) {
+    Comando *new_command = (Comando*) malloc(sizeof(Comando));
+    new_command->argumentos_execucao = NULL;
+    int i = 1;
+    for (int j = 0; j < quantidade_argumentos; j++) {
+        new_command->argumentos_execucao = (char **) realloc(new_command->argumentos_execucao, sizeof(char*) * i);
+        new_command->argumentos_execucao[i - 1] = strdup(exec_commands[i - 1]);
+        i++;
+    }
+    new_command->argumentos_execucao = (char **) realloc(new_command->argumentos_execucao, sizeof(char*) * i);
+    new_command->argumentos_execucao[i - 1] = NULL;
+    if (exec_sequence == NULL) {
+        new_command->tipo_sequencia = NULL;
+    } else {
+        new_command->tipo_sequencia = strdup(exec_sequence);
+    }
+    new_command->quantidade_argumentos = quantidade_argumentos;
+    new_command->next = NULL;
+    new_command->prev = final;
+    if (final == NULL) {
+        inicio = new_command;
+    } else {
+        final->next = new_command;
+    }
+    final = new_command;
+}
+
+int comando_valido(char** argumentos) {
+    if (argumentos == NULL || argumentos[0]==NULL){
+        return 0;
+    }
+    return 1;
+}
+
+int detectar_tipo_sequencia(Comando *temp){
+    char *tipo = temp->tipo_sequencia;
+    if (temp->tipo_sequencia == NULL){
+        return 0;
+    }
+    if (strcmp(tipo, "&&")==0){
+        return 1;
+    }
+    else if (strcmp(tipo, "||")==0){
+        return 2;
+    }
+    else if (strcmp(tipo, ";")==0){
+        return 3;
+    }
+    else if (strcmp(tipo, "|")==0){
+        return 4;
+    }
+    else {
+        return 0;
+    }
+}
+
+void exec_programa_padrao(char **arg){
+    pid_t pid = fork();
+    if (pid == -1){
+        perror("\nerror! failed execution!\n");
+        exit(1);
+    }
+    else if (pid == 0) {
+        execvp(arg[0], arg);
+        var_condicional_execução = 1;
+        exit(0);
+    }
+    else {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WEXITSTATUS(status) || WIFEXITED(status) != 0){
+            var_condicional_execução = 0;
+        }
+    }
+}
+
+void exec_pipe(Comando *cmd_left, Comando *cmd_right) {
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        perror("pipe");
+        var_condicional_execução = 0;
+        return;
+    }
+    
+    pid_t pid1 = fork();
+    if (pid1 < 0) {
+        perror("fork");
+        var_condicional_execução = 0;
+        return;
+    }
+    if (pid1 == 0) {
+        // Filho 1: executa o comando à esquerda
+        close(pipefd[0]);                 // fecha a extremidade de leitura
+        dup2(pipefd[1], STDOUT_FILENO);     // redireciona STDOUT para a escrita do pipe
+        close(pipefd[1]);
+        execvp(cmd_left->argumentos_execucao[0], cmd_left->argumentos_execucao);
+        perror("execvp (left command)");
+        exit(EXIT_FAILURE);
+    }
+    
+    pid_t pid2 = fork();
+    if (pid2 < 0) {
+        perror("fork");
+        var_condicional_execução = 0;
+        return;
+    }
+    if (pid2 == 0) {
+        // Filho 2: executa o comando à direita
+        close(pipefd[1]);                 // fecha a extremidade de escrita
+        dup2(pipefd[0], STDIN_FILENO);      // redireciona STDIN para a leitura do pipe
+        close(pipefd[0]);
+        execvp(cmd_right->argumentos_execucao[0], cmd_right->argumentos_execucao);
+        perror("execvp (right command)");
+        exit(EXIT_FAILURE);
+    }
+    
+    // No pai: fecha ambas as extremidades e espera os filhos
+    close(pipefd[0]);
+    close(pipefd[1]);
+    int status;
+    waitpid(pid1, &status, 0);
+    waitpid(pid2, &status, 0);
+}
+
+void exec_ls(char **arg,int contador){
+    // mesma funcionalidade do execute_app, porem com algumas mudanças para generalizar o uso do "ls"
+    // e fazer o mesmo exibir o tipo dos arquivos no diretorio atual no qual o shell está sendo executado
+    pid_t pid = fork();
+    if (pid == -1){
+        perror("fork");
+        exit(1);
+    }
+    if (pid == 0){
+        contador+=2;
+        arg = (char **)realloc(arg,contador);
+        arg[contador-1] = strdup("-F");
+        arg[contador] = NULL;
+        execvp(arg[0],arg);
+        var_condicional_execução = 1;
+        exit(0);
+    }
+    else {
+        int status;
+        waitpid(pid,&status, 0);
+        if (WIFEXITED(status) && WEXITSTATUS(status)!=0){
+            printf("\nfailed exec ls command!\n");
+            var_condicional_execução = 0;
+        }
+        return;
+    }
+}
+
+void exec_cd(char **arg,char **diretorio_de_exec_atual,int contador_argumentos){
+    char* home = getenv("HOME");
+    if (contador_argumentos == 1){
+        int status = chdir(home);
+        if (status != 0) {
+            perror("\ncd failure error!\n");
+            var_condicional_execução = 0;
+        }
+        else {
+            var_condicional_execução = 1;
+            *diretorio_de_exec_atual = home;
+        }
+    }
+    else if (contador_argumentos == 2){
+        int status = chdir(arg[1]);
+        if (status != 0) {
+            var_condicional_execução = 0;
+            perror("\ncd failure error!\n");
+        }
+        else {
+            var_condicional_execução = 1;
+            *diretorio_de_exec_atual = arg[1];
+        }
+    }
+}
+void exec_geral(Comando *programa,char **path,char *home_history){
+    printf("\n");
+    if (strcmp(programa->argumentos_execucao[0],"cd")==0){
+        exec_cd(programa->argumentos_execucao, path,programa->quantidade_argumentos);
+        fflush(stdout);
+    }
+    else if (strcmp(programa->argumentos_execucao[0],"ls")==0) {
+        exec_ls(programa->argumentos_execucao,programa->quantidade_argumentos);
+        fflush(stdout);
+    }
+    else if (strcmp(programa->argumentos_execucao[0], "cls") ==0) {
+        system("clear");
+        printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n");
+        fflush(stdout);
+        // captura o comando "exit" e limpa a saida do terminal
+    }
+    else if (strcmp(programa->argumentos_execucao[0], "help")==0){
+        fflush(stdout);
+        printf("\ncd -> will move the execution initial_dir of this shell to '/' dir if no arg was typed, else will move\nthe current exec initial_dir to the typed argument initial_dir.\nex: 'cd /home/your_pc_name/'\n\nArrow up and Down -> move between the history of used commands\n\ncls -> clears the terminal window\n\nhcls -> clears the command history\n\nexit -> exits this shell.\n\nIf you type the disired program you wish to be executed, and the program \nhas an executable in the initial_dir, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.");
+        // captura o comando "help" e printa a lista de comandos
+    }
+    else if (strcmp(programa->argumentos_execucao[0], "hcls")==0) {
+        // captura o comando "hcls" que apagará o historico de comandos caso o usuario digite y ou Y 
+        fflush(stdout);
+        int escolha;
+        printf("\nAre you sure you want to do this? (default: N) y/N?%c",32);
+        escolha = getchar();
+        if (escolha == 'y'|| escolha == 'Y'){
+            if(remove(home_history)==0){
+                clear_history();
+                write_history(home_history);
+                printf("\nCommands history was wiped with success!");
+            }
+            else {
+                printf("Error! could not delete %s",home_history);
+            }
+        }
+    }
+    else {
+        exec_programa_padrao(programa->argumentos_execucao);
+    }
+    
+}
+
+
+int main() {
     char *path_path = getenv("PATH");
-    printf("\033]0;%s\007","Concha-shell");
-    fflush(stdout);
-    snprintf(home, sizeof(home), "%s/%s",path_home,".config/concha/shell_history.txt");
-    system("clear");
-    read_his(home,path_home);
+    char *user = getenv("USER");
+
     const char *env_path = path_path;
     if (env_path == NULL) {
         env_path = "/usr/local/bin:/usr/bin:/bin";
     }
     setenv("PATH", env_path, 1);
-    initial_dir = strdup(path_home);
-    // strdup serve para "copiar" uma string para um ponteiro char (bem util!)
-    //*
+
+    char home_history[5124];
+    char *path_home = getenv("HOME");
+    printf("\033]0;%s\007","Concha-shell");
+    fflush(stdout);
+    snprintf(home_history, sizeof(home_history), "%s/%s",path_home,".config/concha/shell_history.txt");
+    system("clear");
     struct sigaction sa;
     sa.sa_handler = handle_sigint;
     sigemptyset(&sa.sa_mask);
@@ -148,138 +323,115 @@ int main(){
         perror("sigaction");
         return 1;
     }
-    //* apenas impede de fechar o programa quando (ctrl + c) for apertado
-    chdir(initial_dir);
-    printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n");
+    char *diretorio_de_exec = getenv("HOME");
+    chdir(diretorio_de_exec);
+    read_his(home_history, path_home);
+    printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n\n\n");
     while (1) {
+        inicio:
         char nome[PATH_MAX];
         getcwd(nome, sizeof(nome)); 
-        // pega o nome do diretorio atual e copia para o buffer essa função getcwd() é extremamente interessante!
-        char *token = NULL,*texto = NULL,**args=NULL;
-        int contador =0;
-        // contador de args
+        var_condicional_execução = 1;
+        char *texto;
         char frase[5128];
         snprintf(frase,sizeof(frase),"$ Concha & %s [-> %s <-] =❱ ",user,nome);
         texto = readline(frase);
-        //
-        // adorei a ideia do readline, alem de ser simples, é extremamente pratico de implementar
-        // ele basicamente serve para que o historico funcione, podendo extrair da lista do historico
-        // e colocando no buffer de input (stdin)
-
-        //  remove qualquer "\n" que vaze do input do usuario
         if (texto[0]=='\0'){
-            // caso o input do usuaro seja vazio (apenas um "\n") ele ignora o input
-            // e printa os espaços
+            printf("\n\n");
+            goto inicio;
         }
-        else {
-            add_history(texto); // adiciona na lista de historico
-            write_history(home); // grava no arquivo do historico, para memoria persistente dos comandos
-            token = strtok(texto," ");
-            while (token!=NULL) {
-                contador+=1;
-                args = realloc(args, sizeof(char*)*(1+contador));
-                if (token[0]=='$'){
-                    char *temp = getenv(token+1);
-                    printf("%s", temp);
-                    if (temp){
-                        args[contador-1] = strdup(temp);
-                        //free(temp);
-                        token = strtok(NULL, " ");
-                    }
-                    else {
-                        contador-=1;
-                        token = strtok(NULL, " ");
-                    }
-                    //caso o argumento seja iniciado por $, essa parte tentará extrair o caminho do argumento
+        add_history(texto); // adiciona na lista de historico
+        write_history(home_history);
+        char **argumentos = NULL;
+        char *token = strtok(texto, " ");
+        int contador = 0;
+        while (token != NULL) {
+            if (strcmp(token, "&&") == 0 || strcmp(token, "||") == 0 || strcmp(token, ";") == 0 || strcmp(token, "|") == 0) {
+                // Executa caso o comando anterior tenha sucesso
+                if (comando_valido(argumentos)){
+                    contador++;
+                    argumentos = (char **) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = NULL;
+                    add_command(argumentos, token, contador-1);
+                    argumentos = NULL;
+                    contador = 0;
+                    token = strtok(NULL, " ");
                 }
                 else {
-                    args[contador-1] = strdup(token);
+                    if (inicio != NULL || final != NULL){
+                        free_list();
+                    }
+                    printf("\ninvalid command!\n\n\n");
+                    goto inicio;
+                }
+            }
+            else {
+                if (token[0] == '$'){
+                    char *temp = token+1;
+                    contador++;
+                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = strdup(getenv(temp));
+                    token = strtok(NULL, " ");
+                }
+                else {
+                    if (strcmp(token, "exit")==0){
+                        printf("\n\nthx for using this shell!! :)");
+                        exit(0);
+                    }
+                    contador++;
+                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = strdup(token);
                     token = strtok(NULL, " ");
                 }
             }
-            // loop para transformar o input do usuario em tokens
-            // ex: cd /home/ -> args[0] = cd, args[1] = /home/ 
-            if (contador > 0) {
-                args[contador] = NULL;
-                // apenas garante que o final da lista de strings arg, terminará em NULL
-                // pois para o shell executar arquivos, o execvp quando recebe os argumentos,
-                // o ultimo item da lista de args, tem que ser um NULL 
-            }
-            if (strcmp(args[0], "exit")==0){
-                printf("\n\nthx for using this shell!! :)");
-                exit(0);
-                // captura o comando "exit" e fecha o shell
-            }
-            else if (strcmp(args[0], "help")==0){
-                printf("\033]0;%s\007",texto);
-                fflush(stdout);
-                printf("\ncd -> will move the execution initial_dir of this shell to '/' dir if no arg was typed, else will move\nthe current exec initial_dir to the typed argument initial_dir.\nex: 'cd /home/your_pc_name/'\n\nArrow up and Down -> move between the history of used commands\n\ncls -> clears the terminal window\n\nhcls -> clears the command history\n\nexit -> exits this shell.\n\nIf you type the disired program you wish to be executed, and the program \nhas an executable in the initial_dir, the program will be executed\nand in the case that the shell does not find the executable\nthe program will ignore your input.\n\nAlso, this shell currently does not support the keyboard arrows for going back or forward\nPlease, use the backspace to fix any typos in your input.\n\nMake sure not to use 'Ctrl+C' or 'Ctrl+V'\ninstead, use 'Ctrl+Shift+C' to copy or 'Ctrl+Shift+V' to paste.");
-                // captura o comando "help" e printa a lista de comandos
-            }
-            else if (strcmp(args[0], "hcls")==0) {
-                // captura o comando "hcls" que apagará o historico de comandos caso o usuario digite y ou Y 
-                int escolha;
-                printf("\nAre you sure you want to do this? (default: N) y/N?%c",32);
-                escolha = getchar();
-                if (escolha == 'y'|| escolha == 'Y'){
-                    if(remove(home)==0){
-                        clear_history();
-                        write_history(home);
-                        printf("\nCommands history was wiped with success!");
-                    }
-                    else {
-                        printf("Error! could not delete %s",initial_dir);
-                    }
-                }
-            }
-            else if (strcmp(args[0], "ls")==0){
-                printf("\033]0;%s\007",texto);
-                fflush(stdout);
-                printf("\n");
-                strcpy(args[0],"/bin/ls");
-                ls(args,contador);
-                // captura o comando "ls" e chama a função que checa se ls foi executado sem argumentos ou nao
-                // é adiciona o argumento "-F" para exibir o formato do arquivo
-            }
-            else if (strcmp(args[0], "cls") ==0) {
-                system("clear");
-                free(token);
-                free(args);
-                continue;
-                // captura o comando "exit" e limpa a saida do terminal
-            }
-            else if(strcmp(args[0], "cd")==0){
-                printf("\033]0;%s\007",texto);
-                fflush(stdout);
-                cd(contador ,&initial_dir ,args);
-                // captura o comando "cd", e executa a função que troca o diretorio em que o shell está sendo executado, via o chdir()
-                // ex: 
-                //      initial_dir atual-> "/"
-                //      cd /home/bolota/
-                //      initial_dir atual-> "/home/bolota"    
-            }
-            else {
-                printf("\n");
-                printf("\033]0;%s\007",texto);
-                fflush(stdout);
-                execute_app(args);
-                // tenta executar a entrada do usuario, por meio do execvp(), caso a entrada do usuario, bata com um executavel
-                // na initial_dir do sistema, o shell se clona e passa executar o comando do usuario em um processo filho, ate o comando
-                // para de executar (ex: " exit() ") ou ele for terminado por um sinal (ex: " SIGTERM ")
-            }
-            printf("\n");
-            for (int i = 0; i < contador; i++) {
-                free(args[i]);
-                // libera a memoria de todas as strings na lista de argumentos
-            }   
-            free(args);
-            free(texto);
-            // libera a memoria da lista em si
         }
-
+        contador++;
+        argumentos = (char **) realloc(argumentos, sizeof(char*) * contador);
+        argumentos[contador - 1] = NULL;
+        add_command(argumentos, NULL, contador -1);
+        argumentos = NULL;
+        contador = 0;
+        int logica_shell = 3;
+        // Termina a parte de adicionar comandos/filtrar
+        Comando *comando = inicio;
+        printf("\033]0;%s\007","Concha");
+        free(texto);
+        while (comando) {
+            // && -> 1  executa caso o antecessor fechar com sucesso
+            // || -> 2  executa caso o antecessor der erro
+            //  ; -> 3  executa independente
+            //  | -> 4  executa com a saida do anterior
+            //  
+            int atual = detectar_tipo_sequencia(comando); 
+            if (atual == 4) {
+                if (comando->next == NULL) {
+                    fprintf(stderr, "Erro: pipe sem comando à direita.\n");
+                    var_condicional_execução = 0;
+                    break;
+                }
+                exec_pipe(comando, comando->next);
+                comando = comando->next->next;
+                if (comando == NULL) break;
+                logica_shell = detectar_tipo_sequencia(comando);
+                continue;
+            }
+            switch (logica_shell) {
+                case 1:
+                    if(var_condicional_execução ==1){
+                        exec_geral(comando, &diretorio_de_exec,home_history);
+                    }break;
+                case 2:
+                    if(!var_condicional_execução){
+                        exec_geral(comando, &diretorio_de_exec,home_history);
+                    }break;
+                case 3:
+                    exec_geral(comando, &diretorio_de_exec,home_history);break;
+            }
+            logica_shell = detectar_tipo_sequencia(comando);
+            comando = comando->next;
+        }
+        free_list();
+        printf("\n\n");
     }
-    free(user);
-    free(initial_dir);
-    // por fim, libera a memoria da string que contem o diretorio atual no qual o shell está
     return 0;
 }
