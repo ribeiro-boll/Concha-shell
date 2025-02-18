@@ -5,7 +5,7 @@
 
 
 
-- *English version: [English version](#English)*
+- *English version: [English version](#English)* 
 
 - *Versão pt-BR: [Versão pt-BR](#pt-BR)*
 
@@ -15,6 +15,8 @@
 A simple shell implemented in C for educational purposes. It provides basic command execution, directory navigation, and minimal signal handling.
 
 **Now with Command history and arrow keys are now usable for editing the command input!**
+**Now with Logic operators ('&&', '||' ou ';') and pipe operator ( '|' )**
+
 
 ### Features
 - **Change Directory (`cd`)**: Changes the current directory. If no argument is provided, defaults to the directory ($HOME).
