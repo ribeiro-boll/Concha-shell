@@ -14,9 +14,10 @@
 
 A simple shell implemented in C for educational purposes. It provides basic command execution, directory navigation, and minimal signal handling.
 
-**Now with Command history and arrow keys are now usable for editing the command input**
-**And also with Logic operators ('&&', '||' ou ';') and pipe operator ( '|' )!!**
-
+**Now with:**
+  **- Logic operators ('&&', '||' ou ';') and pipe operator ( '|' )!!**
+  **- Command history**
+  **- Arrow keys are now usable for editing the command input**
 
 ### Features
 - **Change Directory (`cd`)**: Changes the current directory. If no argument is provided, defaults to the directory ($HOME).
@@ -43,8 +44,10 @@ gcc -o concha concha.c -lreadline
 
 Um shell simples implementado em C para fins educacionais. Ele fornece execução básica de comandos, navegação de diretórios e tratamento mínimo de sinais.
 
-**Agora com o histórico de comandos e as teclas de seta estão disponíveis para editar o comando digitado**
-**E também com operadores lógicos ('&&', '||' ou ';') e operador pipe ('|')!!**
+**Agora com:**
+**- Operadores lógicos ('&&', '||' ou ';') e operador pipe ('|')!!**
+**- Histórico de comandos**
+**- As teclas de seta agora podem ser usadas para editar a entrada de comandos**
 
 ### Funcionalidades
 - **Mudar Diretório (`cd`)**: Altera o diretório atual. Se nenhum argumento for fornecido, utiliza como padrão o diretório ($HOME).
