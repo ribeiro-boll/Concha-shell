@@ -16,7 +16,7 @@ A simple shell implemented in C for educational purposes. It provides basic comm
 
 **Now with:**
 
-  **- Logic operators ('&&', '||' ou ';') and pipe operator ( '|' )!!**
+  **- Logic operators ('&&', '||' ou ';') and pipe operator ( '|' )**
   
   **- Command history**
   
@@ -51,7 +51,7 @@ Um shell simples implementado em C para fins educacionais. Ele fornece execuçã
 
 **Agora com:**
 
-**- Operadores lógicos ('&&', '||' ou ';') e operador pipe ('|')!!**
+**- Operadores lógicos ('&&', '||' ou ';') e operador pipe ('|')**
 
 **- Histórico de comandos**
 
