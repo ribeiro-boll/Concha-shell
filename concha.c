@@ -1,5 +1,6 @@
 #include <linux/limits.h>
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -23,7 +24,7 @@ int var_condicional_execução = 0; // muda para 0, caso a execução de algo fa
 
 
 void handle_sigint(int signum) {
-    printf("\nSIGINT (Ctrl+C) detectado...\nUse 'Ctrl+Shift+C' para copiar ou 'Ctrl+Shift+V' para colar.\nPara sair, use 'exit'\n\n");
+    printf("\nSIGINT (Ctrl+C) detected...\nUse 'Ctrl+Shift+C' for copying ou 'Ctrl+Shift+V' for pasting.\nto exit, use 'exit'\n\nto continue, press enter");
     fflush(stdout);
     return;
     // printa uma mensagem de aviso, pois ctrl + c foi apertado
@@ -286,10 +287,15 @@ void exec_geral(Comando *programa,char **path,char *home_history){
                 clear_history();
                 write_history(home_history);
                 printf("\nCommands history was wiped with success!");
+                return;
             }
             else {
                 printf("Error! could not delete %s",home_history);
+                return;
             }
+        }
+        else{
+            return;
         }
     }
     else {
@@ -329,12 +335,18 @@ int main() {
     printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n\n\n");
     while (1) {
         inicio:
+        time_t timer;
+        time(&timer);
+        struct tm* tm_info;
+        char tempo[80];
+        tm_info = localtime(&timer);
+        strftime(tempo,80,"%T",tm_info);
         char nome[PATH_MAX];
         getcwd(nome, sizeof(nome)); 
         var_condicional_execução = 1;
         char *texto;
         char frase[5128];
-        snprintf(frase,sizeof(frase),"$ Concha & %s [-> %s <-] =❱ ",user,nome);
+        snprintf(frase,sizeof(frase),"┌─(Concha & %s - %s)\n╰─[%s]─➤ ",user,tempo,nome);
         texto = readline(frase);
         if (texto[0]=='\0'){
             printf("\n\n");
