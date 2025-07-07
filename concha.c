@@ -483,7 +483,7 @@ int main() {
                 }
                 else if (token[0] == '~' && token[1] == '/') {
                     char frase_extra[5128];
-                    snprintf(frase_extra, sizeof(frase_extra), "%s/%s", diretorio,token+2);
+                    snprintf(frase_extra, sizeof(frase_extra), "%s/%s", path_home,token+2);
                     contador++;
                     argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
                     argumentos[contador - 1] = strdup(frase_extra);
