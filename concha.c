@@ -1,3 +1,4 @@
+
 #include <linux/limits.h>
 #include <stdio.h>
 #include <time.h>
@@ -9,6 +10,9 @@
 #include <unistd.h>
 #include <readline/history.h>
 #include <readline/readline.h>
+
+char *aspas = "'";
+char aspas_dupla = '"';
 
 typedef struct temp {
     char **argumentos_execucao;
@@ -306,6 +310,7 @@ void exec_geral(Comando *programa,char **path,char *home_history){
 
 
 int main() {
+    int contador_aspas=0;
     char *path_path = getenv("PATH");
     char *user = getenv("USER");
 
@@ -333,24 +338,25 @@ int main() {
     chdir(diretorio_de_exec);
     read_his(home_history, path_home);
     printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n\n\n");
+    char buffer_espaco[5128];
+    char buffer_espaco_continuo[5128];
     while (1) {
-        inicio:
         time_t timer;
         time(&timer);
         struct tm* tm_info;
         char tempo[80];
         tm_info = localtime(&timer);
         strftime(tempo,80,"%T",tm_info);
-        char nome[PATH_MAX];
-        getcwd(nome, sizeof(nome)); 
+        char diretorio[PATH_MAX];
+        getcwd(diretorio, sizeof(diretorio)); 
         var_condicional_execução = 1;
         char *texto;
         char frase[5128];
-        snprintf(frase,sizeof(frase),"┌─(Concha & %s - %s)\n╰─[%s]─➤ ",user,tempo,nome);
+        snprintf(frase,sizeof(frase),"┌─(Concha & %s - %s)\n╰─[%s]─➤ ",user,tempo,diretorio);
         texto = readline(frase);
         if (texto[0]=='\0'){
             printf("\n\n");
-            goto inicio;
+            continue;
         }
         add_history(texto); // adiciona na lista de historico
         write_history(home_history);
@@ -374,7 +380,7 @@ int main() {
                         free_list();
                     }
                     printf("\ninvalid command!\n\n\n");
-                    goto inicio;
+                    continue;
                 }
             }
             else {
@@ -385,8 +391,83 @@ int main() {
                     argumentos[contador - 1] = strdup(getenv(temp));
                     token = strtok(NULL, " ");
                 }
+                else if (token[0] == aspas[0] && token[strlen(token)-1] == aspas[0]) {
+                    char frase_temp_entre_aspas[5128];
+                    char *temp;
+                    temp = strdup(token);
+                    temp++;
+                    temp[strlen(temp)-1] = '\0';
+                    contador++;
+                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = strdup(temp);
+                    token = strtok(NULL, " ");
+                }
+                else if (token[0] == aspas_dupla && token[strlen(token)-1] == aspas_dupla) {
+                    char frase_temp_entre_aspas[5128];
+                    char *temp;
+                    temp = strdup(token);
+                    temp++;
+                    temp[strlen(temp)-1] = '\0';
+                    contador++;
+                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = strdup(temp);
+                    token = strtok(NULL, " ");
+                }
+                else if (token[strlen(token)-1] == aspas[0] && contador_aspas) {
+                    contador_aspas = 0;
+                    char frase_espacos[5128];
+                    char *temp;
+                    temp = strdup(token);
+                    temp[strlen(temp)-1] = '\0';
+                    snprintf(frase_espacos, sizeof(frase_espacos), "%s %s",buffer_espaco+1,temp);
+                    strcpy(buffer_espaco,"");
+
+                    temp = NULL;
+                    contador++;
+                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = strdup(frase_espacos);
+                    token = strtok(NULL, " ");
+                }
+                else if (token[0] == aspas[0]) {
+                    strcpy(buffer_espaco, token);
+                    contador_aspas++;
+                    token = strtok(NULL, " ");
+                }
+                else if (token[strlen(token)-1] == aspas_dupla && contador_aspas) {
+                    contador_aspas = 0;
+                    char frase_espacos[5128];
+                    char *temp;
+                    temp = strdup(token);
+                    temp[strlen(temp)-1] = '\0';
+                    snprintf(frase_espacos, sizeof(frase_espacos), "%s %s",buffer_espaco+1,temp);
+                    strcpy(buffer_espaco,"");
+                    temp = NULL;
+                    contador++;
+                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = strdup(frase_espacos);
+                    token = strtok(NULL, " ");
+                }
+                else if (token[0] == aspas_dupla) {
+                    strcpy(buffer_espaco, token);
+                    contador_aspas++;
+                    token = strtok(NULL, " ");
+                }
+                else if (contador_aspas) {
+                    snprintf(buffer_espaco_continuo, sizeof(buffer_espaco_continuo), "%s %s", buffer_espaco,token);
+                    strcpy(buffer_espaco,buffer_espaco_continuo);
+                    strcpy(buffer_espaco_continuo,"");
+                    token = strtok(NULL, " ");
+                }
+                else if (token[0] == '~' && token[1] == '/') {
+                    char frase_extra[5128];
+                    snprintf(frase_extra, sizeof(frase_extra), "%s/%s", diretorio,token+2);
+                    contador++;
+                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                    argumentos[contador - 1] = strdup(frase_extra);
+                    token = strtok(NULL, " ");
+                }
                 else {
-                    if (strcmp(token, "exit")==0){
+                    if (strcmp(token, "exit") == 0 && contador == 0){
                         printf("\n\nthx for using this shell!! :)");
                         exit(0);
                     }
