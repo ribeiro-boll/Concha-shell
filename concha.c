@@ -392,7 +392,6 @@ int main() {
                     token = strtok(NULL, " ");
                 }
                 else if (token[0] == aspas[0] && token[strlen(token)-1] == aspas[0]) {
-                    char frase_temp_entre_aspas[5128];
                     char *temp;
                     temp = strdup(token);
                     temp++;
@@ -400,10 +399,10 @@ int main() {
                     contador++;
                     argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
                     argumentos[contador - 1] = strdup(temp);
+                    temp = NULL;
                     token = strtok(NULL, " ");
                 }
                 else if (token[0] == aspas_dupla && token[strlen(token)-1] == aspas_dupla) {
-                    char frase_temp_entre_aspas[5128];
                     char *temp;
                     temp = strdup(token);
                     temp++;
@@ -411,22 +410,30 @@ int main() {
                     contador++;
                     argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
                     argumentos[contador - 1] = strdup(temp);
+                    temp = NULL;
                     token = strtok(NULL, " ");
                 }
                 else if (token[strlen(token)-1] == aspas[0] && contador_aspas) {
-                    contador_aspas = 0;
-                    char frase_espacos[5128];
-                    char *temp;
-                    temp = strdup(token);
-                    temp[strlen(temp)-1] = '\0';
-                    snprintf(frase_espacos, sizeof(frase_espacos), "%s %s",buffer_espaco+1,temp);
-                    strcpy(buffer_espaco,"");
-
-                    temp = NULL;
-                    contador++;
-                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
-                    argumentos[contador - 1] = strdup(frase_espacos);
-                    token = strtok(NULL, " ");
+                    contador_aspas--;
+                    if (contador_aspas == 0){
+                        char frase_espacos[5128];
+                        char *temp;
+                        temp = strdup(token);
+                        temp[strlen(temp)-1] = '\0';
+                        snprintf(frase_espacos, sizeof(frase_espacos), "%s %s",buffer_espaco+1,temp);
+                        strcpy(buffer_espaco,"");
+                        temp = NULL;
+                        contador++;
+                        argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                        argumentos[contador - 1] = strdup(frase_espacos);
+                        token = strtok(NULL, " ");
+                    }
+                    else {
+                        snprintf(buffer_espaco_continuo, sizeof(buffer_espaco_continuo), "%s %s", buffer_espaco,token);
+                        strcpy(buffer_espaco,buffer_espaco_continuo);
+                        strcpy(buffer_espaco_continuo,"");
+                        token = strtok(NULL, " ");
+                    }
                 }
                 else if (token[0] == aspas[0]) {
                     strcpy(buffer_espaco, token);
@@ -435,17 +442,25 @@ int main() {
                 }
                 else if (token[strlen(token)-1] == aspas_dupla && contador_aspas) {
                     contador_aspas = 0;
-                    char frase_espacos[5128];
-                    char *temp;
-                    temp = strdup(token);
-                    temp[strlen(temp)-1] = '\0';
-                    snprintf(frase_espacos, sizeof(frase_espacos), "%s %s",buffer_espaco+1,temp);
-                    strcpy(buffer_espaco,"");
-                    temp = NULL;
-                    contador++;
-                    argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
-                    argumentos[contador - 1] = strdup(frase_espacos);
-                    token = strtok(NULL, " ");
+                    if (contador_aspas == 0){
+                        char frase_espacos[5128];
+                        char *temp;
+                        temp = strdup(token);
+                        temp[strlen(temp)-1] = '\0';
+                        snprintf(frase_espacos, sizeof(frase_espacos), "%s %s",buffer_espaco+1,temp);
+                        strcpy(buffer_espaco,"");
+                        temp = NULL;
+                        contador++;
+                        argumentos = (char**) realloc(argumentos, sizeof(char*) * contador);
+                        argumentos[contador - 1] = strdup(frase_espacos);
+                        token = strtok(NULL, " ");
+                    }
+                    else {
+                        snprintf(buffer_espaco_continuo, sizeof(buffer_espaco_continuo), "%s %s", buffer_espaco,token);
+                        strcpy(buffer_espaco,buffer_espaco_continuo);
+                        strcpy(buffer_espaco_continuo,"");
+                        token = strtok(NULL, " ");
+                    }
                 }
                 else if (token[0] == aspas_dupla) {
                     strcpy(buffer_espaco, token);
@@ -478,6 +493,14 @@ int main() {
                 }
             }
         }
+        if (contador_aspas>0){
+            strcpy(buffer_espaco, "");
+            strcpy(buffer_espaco_continuo, "");
+            printf("\nerror: quotation marks ('') not closed\n\n");
+            free_list();
+            contador_aspas=0;
+            continue;
+        }
         contador++;
         argumentos = (char **) realloc(argumentos, sizeof(char*) * contador);
         argumentos[contador - 1] = NULL;
@@ -487,7 +510,7 @@ int main() {
         int logica_shell = 3;
         // Termina a parte de adicionar comandos/filtrar
         Comando *comando = inicio;
-        printf("\033]0;%s\007","Concha");
+        printf("\033]0;%s\007",comando->argumentos_execucao[0]);
         free(texto);
         while (comando) {
             // && -> 1  executa caso o antecessor fechar com sucesso
