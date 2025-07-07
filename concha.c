@@ -316,7 +316,7 @@ int main() {
 
     const char *env_path = path_path;
     if (env_path == NULL) {
-        env_path = "/usr/local/bin:/usr/bin:/bin";
+       env_path = "/usr/local/bin:/usr/bin:/bin";
     }
     setenv("PATH", env_path, 1);
 
@@ -335,7 +335,15 @@ int main() {
         return 1;
     }
     char *diretorio_de_exec = getenv("HOME");
-    chdir(diretorio_de_exec);
+    char *cwd = getcwd(NULL, 0);
+    if (cwd != NULL) {
+        chdir(cwd);
+        free(cwd);
+    }
+    else {
+        chdir(diretorio_de_exec);
+    }
+
     read_his(home_history, path_home);
     printf("Welcome to Concha!\ntype -> 'help' to view the commands!\n\n\n\n");
     char buffer_espaco[5128];

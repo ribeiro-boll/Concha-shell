@@ -1,9 +1,11 @@
 [Desktop Entry]
-Name=Concha
-Comment=Minishell feito em C
-Exec=concha
+Type=Service
+ServiceTypes=KonqPopupMenu/Plugin,inode/directory
+MimeType=inode/directory;
+Actions=abrir_concha;
+
+[Desktop Action abrir_concha]
+Name=Abrir Concha Aqui
+Name[pt_BR]=Abrir Concha Aqui
 Icon=utilities-terminal
-Terminal=true
-Type=Application
-Categories=Utility;Terminal;
-Keywords=cli;shell;minishell;
+Exec=/usr/local/bin/concha-wrapper %f
